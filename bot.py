@@ -1,4 +1,4 @@
-import discord
+import discord, among
 
 # reference links
 # discord.py API reference: https://discordpy.readthedocs.io/en/latest/api.html#
@@ -112,11 +112,37 @@ async def on_invite_delete(invite):
 
 @client.event
 async def on_message(message):
-    if message.author == client.user:
+    if message.author.bot:
         return
 
-    if message.content.startswith('$hello'):
-        await message.channel.send('Hello!')
+    if message.content.startswith('$ping'):
+        await message.channel.send('pong!')
+    
+    elif message.content.equals('$among us help'):
+        among_us_help_string = 'example: $among <Jester> <users>'
+        among_us_help_string += '\n<Jester>: \'-j\' if playing Jester mode'
+        among_us_help_string += '\n<users> list of discord users, mention each user playing, not including the message author'
+        await message.channel.send(among_us_help_string)
+
+    elif message.content.startswith('$among'):
+        jester = message.content.contains('-j')
+        await play_among_us(message, jester)
+    
+
+
+async def play_among_us(message, jester_mode):
+    players = [message.author]
+    for member in message.mentions:
+        players.append(member)
+
+    game = among.AmongUs(players)
+    
+    if jester_mode:
+        game.play_jester()
+    else:
+        game.play_vanilla()
+    pass
+
 
 token_file = open("resources\\token.txt", "r")  # get bot token from a file
 token = token_file.read()                       # file in .gitignore for security
