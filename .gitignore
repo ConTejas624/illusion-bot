@@ -1,3 +1,4 @@
 illusion.code-workspace
 ignored/
 .idea/
+__pycache__/among.cpython-36.pyc
