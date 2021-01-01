@@ -7,18 +7,29 @@ import discord
 
 client = discord.Client()
 
-# channel to send log messages in
-channel = None
+# data file
+data_file = open("data.csv", "r")
+
+# channel for bot log messages
+log_channel = None
 
 
 @client.event
 async def on_ready():
+    global log_channel
+    log_channel = await client.fetch_channel(521829000029405184)
+
     print('We have logged in as {0.user}'.format(client))
 
 
 @client.event
 async def on_disconnect():
     print('Disconnected from {0.user}'.format(client))
+
+    # write data to file
+    global data_file
+    data_file = open("data.csv", "w")
+    data_file.write(str(log_channel.id))
 
 
 @client.event
@@ -143,16 +154,22 @@ async def on_invite_delete(invite):
 
 @client.event
 async def on_message(message):
+    global log_channel
+
     # prevent the bot from replying to its own messages
     if message.author.bot:
         return
 
     # used to check if bot is online/connection
-    if message.content.startswith('$ping'):
+    if message.content == '$ping':
         await message.channel.send('pong!')
 
     if message.content == '$test':
-        await message.channel.send(message.author.discriminator)
+        await log_channel.send('test')
+
+    if message.content == '$disconnect':
+        await message.channel.send('closing')
+        await client.close()
 
 
 token_file = open("ignored\\token.txt", "r")  # get bot token from a file
