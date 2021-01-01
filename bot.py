@@ -19,19 +19,14 @@ log_channel = None
 
 # format for messages to go into log_channel
 # eventually will have fancier formatting for logged messages and this will be more useful
-async def log_message(category, tag, user, description, text):
+async def log_message(category, *args):
+    if len(args) < 3:
+        return
+
     msg = category
-    msg += "\n" + tag + ": " + user
-    msg += "\n" + description + text
 
-    await log_channel.send(msg)
-
-
-async def long_log_message(category, tag, user, description, text, desc2, txt2):
-    msg = category
-    msg += "\n" + tag + ": " + user
-    msg += "\n" + description + text
-    msg += "\n" + desc2 + txt2
+    for str in args:
+        msg += '\n' + str
 
     await log_channel.send(msg)
 
@@ -57,7 +52,7 @@ async def on_disconnect():
 
 @client.event
 async def on_message_delete(message):
-    await log_message('MESSAGE_DELETION', 'user', message.author.name, 'message deleted: ', message.content)
+    await log_message('MESSAGE_DELETION', 'user:', message.author.name, 'message deleted:', message.content)
 
 
 @client.event
@@ -67,7 +62,7 @@ async def on_bulk_message_delete(messages):
 
 @client.event
 async def on_message_edit(before, after):
-    await log_message('MESSAGE_EDIT', 'user', after.author.name, 'previous text: ', before.content)
+    await log_message('MESSAGE_EDIT', 'user:', after.author.name, 'previous text: ', before.content)
 
 
 @client.event
@@ -82,23 +77,24 @@ async def on_reaction_remove(reaction, user):
 
 @client.event
 async def on_reaction_clear(message, reactions):
-    await long_log_message('REACTIONS_CLEARED', 'user', message.author.name, 'message: ', message.content,
-                           'reactions removed: ', str(len(reactions)))
+    await log_message('REACTIONS_CLEARED', 'user:', message.author.name, 'message:', message.content,
+                      'reactions removed:', str(len(reactions)))
 
 
 @client.event
 async def on_guild_channel_create(channel):
-    await log_message('CHANNEL_CREATED', 'channel', channel.name, 'category: ', channel.category.name)
+    await log_message('CHANNEL_CREATED', 'channel:', channel.name, 'category:', channel.category.name)
 
 
 @client.event
 async def on_guild_channel_delete(channel):
-    pass
+    await log_message('CHANNEL_DELETED', 'channel:', channel.name, 'category:', channel.category.name)
 
 
 @client.event
 async def on_guild_channel_update(before, after):
-    pass
+    await log_message('CHANNEL_EDITED', 'previous_name:', before.name, 'previous_category: ',
+                      before.category.name, 'after_name:', after.name, 'after_category', after.category.name)
 
 
 @client.event
@@ -108,22 +104,22 @@ async def on_guild_channel_pins_update(channel, last_pin):
 
 @client.event
 async def on_member_join(member):
-    pass
+    await log_message('USER_JOIN', 'user:', member.name)
 
 
 @client.event
 async def on_member_leave(member):
-    pass
+    await log_message('USER_LEFT', 'user:', member.name)
 
 
 @client.event
 async def on_member_ban(guild, user):
-    pass
+    await log_message('USER_BANNED', 'user:', user.name)
 
 
 @client.event
 async def on_member_unban(guild, user):
-    pass
+    await log_message('USER_UNBANNED', 'user:', user.name)
 
 
 @client.event
@@ -178,8 +174,6 @@ async def on_invite_delete(invite):
 
 @client.event
 async def on_message(message):
-    global log_channel
-
     # prevent the bot from replying to its own messages
     if message.author.bot:
         return
