@@ -8,10 +8,32 @@ import discord
 client = discord.Client()
 
 # data file
-data_file = open("data.csv", "r")
+try:
+    data_file = open("data.csv", "r")
+except FileNotFoundError:
+    data_file = open("data.csv", "w")
 
 # channel for bot log messages
 log_channel = None
+
+
+# format for messages to go into log_channel
+# eventually will have fancier formatting for logged messages and this will be more useful
+async def log_message(category, tag, user, description, text):
+    msg = category
+    msg += "\n" + tag + ": " + user
+    msg += "\n" + description + text
+
+    await log_channel.send(msg)
+
+
+async def long_log_message(category, tag, user, description, text, desc2, txt2):
+    msg = category
+    msg += "\n" + tag + ": " + user
+    msg += "\n" + description + text
+    msg += "\n" + desc2 + txt2
+
+    await log_channel.send(msg)
 
 
 @client.event
@@ -19,6 +41,7 @@ async def on_ready():
     global log_channel
     log_channel = await client.fetch_channel(521829000029405184)
 
+    print('discord.py library version {0.__version__}'.format(discord))
     print('We have logged in as {0.user}'.format(client))
 
 
@@ -34,7 +57,7 @@ async def on_disconnect():
 
 @client.event
 async def on_message_delete(message):
-    pass
+    await log_message('MESSAGE_DELETION', 'user', message.author.name, 'message deleted: ', message.content)
 
 
 @client.event
@@ -44,7 +67,7 @@ async def on_bulk_message_delete(messages):
 
 @client.event
 async def on_message_edit(before, after):
-    pass
+    await log_message('MESSAGE_EDIT', 'user', after.author.name, 'previous text: ', before.content)
 
 
 @client.event
@@ -59,12 +82,13 @@ async def on_reaction_remove(reaction, user):
 
 @client.event
 async def on_reaction_clear(message, reactions):
-    pass
+    await long_log_message('REACTIONS_CLEARED', 'user', message.author.name, 'message: ', message.content,
+                           'reactions removed: ', str(len(reactions)))
 
 
 @client.event
 async def on_guild_channel_create(channel):
-    pass
+    await log_message('CHANNEL_CREATED', 'channel', channel.name, 'category: ', channel.category.name)
 
 
 @client.event
@@ -165,7 +189,7 @@ async def on_message(message):
         await message.channel.send('pong!')
 
     if message.content == '$test':
-        await log_channel.send('test')
+        pass
 
     if message.content == '$disconnect':
         await message.channel.send('closing')
