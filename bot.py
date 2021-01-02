@@ -7,34 +7,32 @@ import discord
 
 client = discord.Client()
 
-# data file
-try:
-    data_file = open("data.csv", "r")
-except FileNotFoundError:
-    print('data_file.csv was not found')
-
-# channel for bot log messages
-log_channel = None
+# dictionary for bot log messages
+# stores {guild.id: channel}
+log_channels = {}
 
 
 # format for messages to go into log_channel
 # eventually will have fancier formatting for logged messages and this will be more useful
-async def log_message(category, *args):
+async def log_message(guild, category, *args):
     if len(args) < 3:
         return
 
     msg = category
 
-    for str in args:
-        msg += '\n' + str
+    for arg in args:
+        msg += '\n' + arg
 
-    await log_channel.send(msg)
+    await log_channels[guild].send(msg)
 
 
 @client.event
 async def on_ready():
-    global log_channel
-    log_channel = await client.fetch_channel(521829000029405184)
+    data_file = open("log_channels.csv", "r")
+    for line in data_file:
+        data = line.split(',')
+        channel = await client.fetch_channel(int(data[1]))
+        log_channels.update({int(data[0]): channel})
 
     print('discord.py library version {0.__version__}'.format(discord))
     print('We have logged in as {0.user}'.format(client))
@@ -45,15 +43,16 @@ async def on_disconnect():
     print('Disconnected from {0.user}'.format(client))
 
     # write data to file
-    global data_file
-    data_file = open("data.csv", "w")
-    data_file.write(str(log_channel.id))
+    data_file = open("log_channels.csv", "w")
+    for guild in log_channels:
+        data_file.write(guild + ',' + log_channels[guild].id)
     data_file.close()
 
 
 @client.event
 async def on_message_delete(message):
-    await log_message('MESSAGE_DELETION', 'user:', message.author.name, 'message deleted:', message.content)
+    await log_message(message.guild.id, 'MESSAGE_DELETION',
+                      'user:', message.author.name, 'message deleted:', message.content)
 
 
 @client.event
@@ -63,7 +62,7 @@ async def on_bulk_message_delete(messages):
 
 @client.event
 async def on_message_edit(before, after):
-    await log_message('MESSAGE_EDIT', 'user:', after.author.name, 'previous text: ', before.content)
+    await log_message(before.guild.id, 'MESSAGE_EDIT', 'user:', after.author.name, 'previous text: ', before.content)
 
 
 @client.event
@@ -78,24 +77,26 @@ async def on_reaction_remove(reaction, user):
 
 @client.event
 async def on_reaction_clear(message, reactions):
-    await log_message('REACTIONS_CLEARED', 'user:', message.author.name, 'message:', message.content,
-                      'reactions removed:', str(len(reactions)))
+    await log_message(message.guild.id, 'REACTIONS_CLEARED', 'user:', message.author.name,
+                      'message:', message.content, 'reactions removed:', str(len(reactions)))
 
 
 @client.event
 async def on_guild_channel_create(channel):
-    await log_message('CHANNEL_CREATED', 'channel:', channel.name, 'category:', channel.category.name)
+    await log_message(channel.guild.id, 'CHANNEL_CREATED',
+                      'channel:', channel.name, 'category:', channel.category.name)
 
 
 @client.event
 async def on_guild_channel_delete(channel):
-    await log_message('CHANNEL_DELETED', 'channel:', channel.name, 'category:', channel.category.name)
+    await log_message(channel.guild.id, 'CHANNEL_DELETED',
+                      'channel:', channel.name, 'category:', channel.category.name)
 
 
 @client.event
 async def on_guild_channel_update(before, after):
-    await log_message('CHANNEL_EDITED', 'previous_name:', before.name, 'previous_category: ', before.category.name,
-                      'after_name:', after.name, 'after_category', after.category.name)
+    await log_message(before.guild.id, 'CHANNEL_EDITED', 'previous_name:', before.name, 'previous_category: ',
+                      before.category.name, 'after_name:', after.name, 'after_category', after.category.name)
 
 
 @client.event
@@ -105,22 +106,22 @@ async def on_guild_channel_pins_update(channel, last_pin):
 
 @client.event
 async def on_member_join(member):
-    await log_message('USER_JOIN', 'user:', member.name)
+    await log_message(member.guild.id, 'USER_JOIN', 'user:', member.name)
 
 
 @client.event
 async def on_member_leave(member):
-    await log_message('USER_LEFT', 'user:', member.name)
+    await log_message(member.guild.id, 'USER_LEFT', 'user:', member.name)
 
 
 @client.event
 async def on_member_ban(guild, user):
-    await log_message('USER_BANNED', 'user:', user.name)
+    await log_message(guild.id, 'USER_BANNED', 'user:', user.name)
 
 
 @client.event
 async def on_member_unban(guild, user):
-    await log_message('USER_UNBANNED', 'user:', user.name)
+    await log_message(guild.id, 'USER_UNBANNED', 'user:', user.name)
 
 
 @client.event
@@ -145,17 +146,17 @@ async def on_guild_update(guild):
 
 @client.event
 async def on_guild_role_create(role):
-    await log_message('ROLE_CREATED', 'role:', role.name, 'mentionable:', role.mentionable)
+    await log_message(role.guild.id, 'ROLE_CREATED', 'role:', role.name, 'mentionable:', role.mentionable)
 
 
 @client.event
 async def on_guild_role_delete(role):
-    await log_message('ROLE_DELETED', 'role:', role.name, 'mentionable:', role.mentionable)
+    await log_message(role.guild.id, 'ROLE_DELETED', 'role:', role.name, 'mentionable:', role.mentionable)
 
 
 @client.event
 async def on_guild_role_update(before, after):
-    await log_message('ROLE_EDITED', 'previous_role:', before.name, 'after_role:', after.name)
+    await log_message(before.guild.id, 'ROLE_EDITED', 'previous_role:', before.name, 'after_role:', after.name)
 
 
 @client.event
@@ -165,12 +166,14 @@ async def on_guild_emojis_update(guild, before, after):
 
 @client.event
 async def on_invite_create(invite):
-    await log_message('INVITE_CREATED', 'invite:', invite.url, 'uses:', invite.max_uses, 'time:', invite.max_age)
+    await log_message(invite.guild.id, 'INVITE_CREATED', 'invite:', invite.url,
+                      'uses:', invite.max_uses, 'time:', invite.max_age)
 
 
 @client.event
 async def on_invite_delete(invite):
-    await log_message('INVITE_DELETED', 'invite:', invite.url, 'uses:', invite.max_uses, 'time:', invite.max_age)
+    await log_message(invite.guild.id, 'INVITE_DELETED', 'invite:', invite.url,
+                      'uses:', invite.max_uses, 'time:', invite.max_age)
 
 
 @client.event
