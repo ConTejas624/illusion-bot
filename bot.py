@@ -11,7 +11,7 @@ client = discord.Client()
 try:
     data_file = open("data.csv", "r")
 except FileNotFoundError:
-    data_file = open("data.csv", "w")
+    print('data_file.csv was not found')
 
 # channel for bot log messages
 log_channel = None
@@ -48,6 +48,7 @@ async def on_disconnect():
     global data_file
     data_file = open("data.csv", "w")
     data_file.write(str(log_channel.id))
+    data_file.close()
 
 
 @client.event
@@ -93,8 +94,8 @@ async def on_guild_channel_delete(channel):
 
 @client.event
 async def on_guild_channel_update(before, after):
-    await log_message('CHANNEL_EDITED', 'previous_name:', before.name, 'previous_category: ',
-                      before.category.name, 'after_name:', after.name, 'after_category', after.category.name)
+    await log_message('CHANNEL_EDITED', 'previous_name:', before.name, 'previous_category: ', before.category.name,
+                      'after_name:', after.name, 'after_category', after.category.name)
 
 
 @client.event
@@ -144,17 +145,17 @@ async def on_guild_update(guild):
 
 @client.event
 async def on_guild_role_create(role):
-    pass
+    await log_message('ROLE_CREATED', 'role:', role.name, 'mentionable:', role.mentionable)
 
 
 @client.event
 async def on_guild_role_delete(role):
-    pass
+    await log_message('ROLE_DELETED', 'role:', role.name, 'mentionable:', role.mentionable)
 
 
 @client.event
 async def on_guild_role_update(before, after):
-    pass
+    await log_message('ROLE_EDITED', 'previous_role:', before.name, 'after_role:', after.name)
 
 
 @client.event
@@ -164,12 +165,12 @@ async def on_guild_emojis_update(guild, before, after):
 
 @client.event
 async def on_invite_create(invite):
-    pass
+    await log_message('INVITE_CREATED', 'invite:', invite.url, 'uses:', invite.max_uses, 'time:', invite.max_age)
 
 
 @client.event
 async def on_invite_delete(invite):
-    pass
+    await log_message('INVITE_DELETED', 'invite:', invite.url, 'uses:', invite.max_uses, 'time:', invite.max_age)
 
 
 @client.event
