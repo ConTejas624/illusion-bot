@@ -23,7 +23,10 @@ async def log_message(guild, category, *args):
     for arg in args:
         msg += '\n' + arg
 
-    await log_channels[guild].send(msg)
+    try:
+        await log_channels[guild].send(msg)
+    except KeyError:
+        print('guild {} has no log channel'.format(guild))
 
 
 @client.event
@@ -45,7 +48,7 @@ async def on_disconnect():
     # write data to file
     data_file = open("log_channels.csv", "w")
     for guild in log_channels:
-        data_file.write(guild + ',' + log_channels[guild].id)
+        data_file.write(str(guild) + ',' + str(log_channels[guild].id))
     data_file.close()
 
 
@@ -186,8 +189,9 @@ async def on_message(message):
     if message.content == '$ping':
         await message.channel.send('pong!')
 
-    if message.content == '$test':
-        pass
+    if message.content.startswith('$test'):
+        if ' -set_log' in message.content:
+            log_channels.update({str(message.guild.id): message.channel})
 
     if message.content == '$disconnect':
         await message.channel.send('closing')
