@@ -8,16 +8,13 @@ import discord
 client = discord.Client()
 
 # dictionary for bot log messages
-# stores {guild.id: channel}
+# stores as {int: channel} as {guild.id: channel}
 log_channels = {}
 
 
 # format for messages to go into log_channel
 # eventually will have fancier formatting for logged messages and this will be more useful
 async def log_message(guild, category, *args):
-    if len(args) < 3:
-        return
-
     msg = category
 
     for arg in args:
@@ -31,11 +28,15 @@ async def log_message(guild, category, *args):
 
 @client.event
 async def on_ready():
-    data_file = open("log_channels.csv", "r")
+    data_file = open("log_channels.csv", "r")  # open data_file
+
+    # parse data_file to populate the log_channels dictionary
     for line in data_file:
         data = line.split(',')
         channel = await client.fetch_channel(int(data[1]))
         log_channels.update({int(data[0]): channel})
+
+    data_file.close()  # close data_file
 
     print('discord.py library version {0.__version__}'.format(discord))
     print('We have logged in as {0.user}'.format(client))
@@ -46,10 +47,11 @@ async def on_disconnect():
     print('Disconnected from {0.user}'.format(client))
 
     # write data to file
-    data_file = open("log_channels.csv", "w")
+    data_file = open("log_channels.csv", "w")  # open data_file
+    # parse log_channels to write the data to file
     for guild in log_channels:
         data_file.write(str(guild) + ',' + str(log_channels[guild].id))
-    data_file.close()
+    data_file.close()  # close data_file
 
 
 @client.event
@@ -205,6 +207,6 @@ async def on_message(message):
 
 token_file = open("ignored\\token.txt", "r")  # get bot token from a file
 token = token_file.read()  # file in .gitignore for security
-token_file.close()
+token_file.close()  # close file
 
 client.run(token)
