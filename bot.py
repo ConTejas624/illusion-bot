@@ -192,12 +192,17 @@ async def on_message(message):
         await message.channel.send('pong!')
 
     # admin things that I want the bot to do (eventually will be open to any admin role)
-    if message.author.id == 794788646153748500:
+    if message.author.id == 293865881828589579 and message.content.startswith('admin'):
 
         # sets this channel as the channel for logs
         if '-set_log' in message.content:
             log_channels.update({str(message.guild.id): message.channel})
             await message.channel.send('Channel set as the log channel')
+
+        # removes this channel as the channel for logs
+        if '-rm_log' in message.content:
+            log_channels.pop(str(message.guild.id))
+            await message.channel.send('Channel removed as the log channel')
 
         # close the connection
         if '-close' in message.content:
