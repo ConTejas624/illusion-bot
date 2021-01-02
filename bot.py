@@ -189,13 +189,18 @@ async def on_message(message):
     if message.content == '$ping':
         await message.channel.send('pong!')
 
-    if message.content.startswith('$test'):
-        if ' -set_log' in message.content:
-            log_channels.update({str(message.guild.id): message.channel})
+    # admin things that I want the bot to do (eventually will be open to any admin role)
+    if message.author.id == 794788646153748500:
 
-    if message.content == '$disconnect':
-        await message.channel.send('closing')
-        await client.close()
+        # sets this channel as the channel for logs
+        if '-set_log' in message.content:
+            log_channels.update({str(message.guild.id): message.channel})
+            await message.channel.send('Channel set as the log channel')
+
+        # close the connection
+        if '-close' in message.content:
+            await message.channel.send('Closing connection')
+            await client.close()
 
 
 token_file = open("ignored\\token.txt", "r")  # get bot token from a file
