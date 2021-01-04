@@ -27,12 +27,23 @@ async def log_message(guild, category, *args):
 
 
 # checks if the user is an admin on the server
-def is_admin(message):
-    pass
+# list of bot admins is stored in admin_data.dat, is ignored from GitHub for security
+# if the bot ever has multiple developers, this would be useful to be able to have the bot recognize users who are not
+# necessarily admins of the guild be able to use the bot's administrative commands
+def is_bot_admin(member):
+    admins_file = open('ignored\\admin_data.dat', 'r')  # open file
+
+    # parse file to check user ids against list of bot admins
+    for admin in admins_file:
+        if admin == member.id:
+            return True
+    admins_file.close()  # close file
+
+    return member.guild_permissions.administrator
 
 
-@client.event
-async def on_ready():
+# read data from csv
+async def read_csv_data():
     data_file = open("log_channels.csv", "r")  # open data_file
 
     # parse data_file to populate the log_channels dictionary
@@ -42,6 +53,11 @@ async def on_ready():
         log_channels.update({int(data[0]): channel})
 
     data_file.close()  # close data_file
+
+
+@client.event
+async def on_ready():
+    await read_csv_data()
 
     print('discord.py library version {0.__version__}'.format(discord))
     print('We have logged in as {0.user}'.format(client))
@@ -197,7 +213,7 @@ async def on_message(message):
         await message.channel.send('pong!')
 
     # admin things that I want the bot to do (eventually will be open to any admin role)
-    if message.author.id == 293865881828589579 or is_admin(message):
+    if is_bot_admin(message.author):
 
         # sets this channel as the channel for logs
         if '-set_log' in message.content:
