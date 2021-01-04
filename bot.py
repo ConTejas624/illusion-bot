@@ -244,9 +244,10 @@ async def on_message(message):
             await message.channel.send('Closing connection')
             await client.close()
 
+# allows this to be used as a code library for another bot possibly
+if __name__ == '__main__':
+    token_file = open("ignored\\token.txt", "r")  # get bot token from a file
+    token = token_file.read()  # file in .gitignore for security
+    token_file.close()  # close file
 
-token_file = open("ignored\\token.txt", "r")  # get bot token from a file
-token = token_file.read()  # file in .gitignore for security
-token_file.close()  # close file
-
-client.run(token)
+    client.run(token)
