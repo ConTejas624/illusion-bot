@@ -26,6 +26,11 @@ async def log_message(guild, category, *args):
         print('guild {} has no log channel'.format(guild))
 
 
+# checks if the user is an admin on the server
+def is_admin(message):
+    pass
+
+
 @client.event
 async def on_ready():
     data_file = open("log_channels.csv", "r")  # open data_file
@@ -192,7 +197,7 @@ async def on_message(message):
         await message.channel.send('pong!')
 
     # admin things that I want the bot to do (eventually will be open to any admin role)
-    if message.author.id == 293865881828589579 and message.content.startswith('admin'):
+    if message.author.id == 293865881828589579 or is_admin(message):
 
         # sets this channel as the channel for logs
         if '-set_log' in message.content:
