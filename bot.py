@@ -35,7 +35,7 @@ def is_bot_admin(member):
 
     # parse file to check user ids against list of bot admins
     for admin in admins_file:
-        if admin == member.id:
+        if admin == str(member.id):
             return True
     admins_file.close()  # close file
 
@@ -214,6 +214,20 @@ async def on_message(message):
 
     # admin things that I want the bot to do (eventually will be open to any admin role)
     if is_bot_admin(message.author):
+        # adds user as a bot admin
+        if '-add_admin' in message.content:
+            admin_data = open('ignored\\admin_data.dat', 'a')  # open file
+            mentions = []  # list of members who were added to send message after
+
+            # parse the mentioned members
+            for member in message.mentions:
+                admin_data.write(str(member.id) + '\n')
+                mentions.append(member.id)
+            admin_data.close()  # close the file
+
+            # send messages to confirm successful admin addition
+            await message.channel.send('User(s) {} added as a bot administrator'.format(mentions))
+            print('User(s) {} added as a bot administrator'.format(mentions))
 
         # sets this channel as the channel for logs
         if '-set_log' in message.content:
