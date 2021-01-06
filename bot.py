@@ -84,8 +84,9 @@ async def on_disconnect():
 
 @client.event
 async def on_message_delete(message):
-    await log_message(message.guild.id, '**MESSAGE_DELETION**',
-                      '**user:**', message.author.name, '**message deleted:**', message.content)
+    if not message.content == '':
+        await log_message(message.guild.id, '**MESSAGE_DELETION**',
+                          '**user:**', message.author.name, '**message deleted:**', message.content)
 
 
 @client.event
