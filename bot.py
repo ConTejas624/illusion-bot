@@ -62,9 +62,12 @@ async def read_csv_data():
 @client.event
 async def on_ready():
     await read_csv_data()
-
     print('discord.py library version {0.__version__}'.format(discord))
-    print('We have logged in as {0.user}'.format(client))
+
+
+@client.event
+async def on_connect():
+    print('Connected as {0.user}'.format(client))
 
 
 @client.event
