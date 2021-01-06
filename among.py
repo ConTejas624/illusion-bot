@@ -1,5 +1,7 @@
 from PIL import Image, ImageGrab, ImageOps, PyAccess
+import cv2
 # https://pillow.readthedocs.io/en/stable/reference/Image.html
+
 
 # vision processing to determine what state the game is in
 # returns 1 if talking, 0 if silent, 2 for game end
