@@ -11,6 +11,12 @@ client = discord.Client()
 # stores as {int: channel} as {guild.id: channel}
 log_channels = {}
 
+# dictionary to store the test responses the bot uses
+# format is {int: {str: str}} as {guild.id: {trigger: response}}
+# if guild.id == 0 -> global response across servers
+responses = {}
+global_responses = {}
+
 
 # format for messages to go into log_channel
 # eventually will have fancier formatting for logged messages and this will be more useful
@@ -59,6 +65,117 @@ async def read_csv_data():
     data_file.close()  # close data_file
 
 
+# loads auto-responses and populates the responses dictionary
+def load_responses():
+    global responses
+    responses_file = open('ignored/responses.csv', 'r')
+
+    for line in responses_file:
+        data = line.split(',')
+        update_responses(data)
+
+    responses_file.close()
+
+
+# adds a response to responses
+def update_responses(*args):
+    if len(args) == 3:
+        temp_map = responses.get(args[0])
+        if temp_map is None:
+            temp_map = {args[1]: args[2]}
+        else:
+            temp_map.update({args[1]: args[2]})
+        responses.update({args[0]: temp_map})
+        del temp_map
+    elif len(args) == 2:
+        global_responses.update({args[0]: args[1]})
+
+
+# writes the responses dictionary to .csv
+def write_responses():
+    global responses
+    responses_file = open('ignored/responses.csv', 'a')
+
+    for guild in responses:
+        for trigger in responses[guild]:
+            responses_file.write(str(guild) + ',' + trigger + ',' + responses[guild][trigger] + '\n')
+
+
+# handles responses for auto-response messages
+async def handle_response(channel, msg):
+    try:
+        for trigger in responses[channel.guild.id]:
+            if trigger in msg:
+                await channel.send(responses[channel.guild.id][trigger])
+                return
+    except KeyError:
+        pass
+    try:
+        for trigger in global_responses:
+            if trigger in msg:
+                await channel.send(global_responses[trigger])
+                return
+    except KeyError:
+        return
+
+
+@client.event
+async def on_message(message):
+    # prevent the bot from replying to its own messages
+    if message.author.bot:
+        return
+
+    # used to check if bot is online/connection
+    if message.content == '$ping':
+        await message.channel.send('pong!')
+
+    # auto-responses
+    await handle_response(message.channel, message.content)
+
+    # admin commands (multiple can be chained together)
+    if is_bot_admin(message.author):
+
+        # adds an auto-response in this server
+        if message.content.startswith('$add'):
+            line = message.content.split('|')
+
+            if '-global' in message.content:  # adds a response for all servers
+                update_responses(line[1], line[2])
+            else:  # adds a response for just this server
+                update_responses(message.guild.id, line[1], line[2])
+            write_responses()
+
+        # adds user as a bot admin
+        if '-add_admin' in message.content:
+            admin_data = open('ignored/admin_data.dat', 'a')  # open file
+            mentions = []  # list of members who were added to send message after
+
+            # parse the mentioned members
+            for member in message.mentions:
+                admin_data.write(str(member.id) + '\n')
+                mentions.append(member.id)
+            admin_data.close()  # close the file
+
+            # send messages to confirm successful admin addition
+            await message.channel.send('User(s) {} added as a bot administrator'.format(mentions))
+            print('User(s) {} added as a bot administrator'.format(mentions))
+
+        # sets this channel as the channel for logs
+        if '-set_log' in message.content:
+            log_channels.update({str(message.guild.id): message.channel})
+            await message.channel.send('Channel set as the log channel')
+
+        # removes this channel as the channel for logs
+        if '-rm_log' in message.content:
+            log_channels.pop(str(message.guild.id))
+            await message.channel.send('Channel removed as the log channel')
+
+        # close the connection
+        if '-close' in message.content:
+            await message.channel.send('Closing connection')
+            await client.close()
+
+
 @client.event
 async def on_ready():
     await read_csv_data()
@@ -80,6 +197,8 @@ async def on_disconnect():
     for guild in log_channels:
         data_file.write(str(guild) + ',' + str(log_channels[guild].id) + '\n')
     data_file.close()  # close data_file
+
+    write_responses()
 
 
 @client.event
@@ -167,56 +286,6 @@ async def on_invite_create(invite):
 async def on_invite_delete(invite):
     await log_message(invite.guild.id, '**INVITE_DELETED**', '**invite:**', invite.url,
                       '**uses:**', invite.max_uses, '**time:**', invite.max_age)
-
-
-@client.event
-async def on_error(event, *args, **kwargs):
-    print('ERROR: ' + event)
-    print(args)
-    print(kwargs)
-
-
-@client.event
-async def on_message(message):
-    # prevent the bot from replying to its own messages
-    if message.author.bot:
-        return
-
-    # used to check if bot is online/connection
-    if message.content == '$ping':
-        await message.channel.send('pong!')
-
-    # admin commands (multiple can be chained together)
-    if is_bot_admin(message.author):
-        # adds user as a bot admin
-        if '-add_admin' in message.content:
-            admin_data = open('ignored/admin_data.dat', 'a')  # open file
-            mentions = []  # list of members who were added to send message after
-
-            # parse the mentioned members
-            for member in message.mentions:
-                admin_data.write(str(member.id) + '\n')
-                mentions.append(member.id)
-            admin_data.close()  # close the file
-
-            # send messages to confirm successful admin addition
-            await message.channel.send('User(s) {} added as a bot administrator'.format(mentions))
-            print('User(s) {} added as a bot administrator'.format(mentions))
-
-        # sets this channel as the channel for logs
-        if '-set_log' in message.content:
-            log_channels.update({str(message.guild.id): message.channel})
-            await message.channel.send('Channel set as the log channel')
-
-        # removes this channel as the channel for logs
-        if '-rm_log' in message.content:
-            log_channels.pop(str(message.guild.id))
-            await message.channel.send('Channel removed as the log channel')
-
-        # close the connection
-        if '-close' in message.content:
-            await message.channel.send('Closing connection')
-            await client.close()
 
 
 # allows this to be used as a code library for another bot possibly
