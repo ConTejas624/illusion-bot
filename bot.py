@@ -89,24 +89,9 @@ async def on_message_delete(message):
 
 
 @client.event
-async def on_bulk_message_delete(messages):
-    pass
-
-
-@client.event
 async def on_message_edit(before, after):
     await log_message(before.guild.id, '**MESSAGE_EDIT**', '**user:**', after.author.name,
                       '**previous text: **', before.content, '**new text:**', after.content)
-
-
-@client.event
-async def on_reaction_add(reaction, user):
-    pass
-
-
-@client.event
-async def on_reaction_remove(reaction, user):
-    pass
 
 
 @client.event
@@ -135,11 +120,6 @@ async def on_guild_channel_update(before, after):
 
 
 @client.event
-async def on_guild_channel_pins_update(channel, last_pin):
-    pass
-
-
-@client.event
 async def on_member_join(member):
     await log_message(member.guild.id, '**USER_JOIN**', '**user:**', member.name)
 
@@ -160,26 +140,6 @@ async def on_member_unban(guild, user):
 
 
 @client.event
-async def on_member_update(before, after):
-    pass
-
-
-@client.event
-async def on_guild_join(guild):
-    pass
-
-
-@client.event
-async def on_guild_remove(guild):
-    pass
-
-
-@client.event
-async def on_guild_update(guild):
-    pass
-
-
-@client.event
 async def on_guild_role_create(role):
     await log_message(role.guild.id, '**ROLE_CREATED**', '**role:**', role.name, '**mentionable:**', role.mentionable)
 
@@ -193,11 +153,6 @@ async def on_guild_role_delete(role):
 async def on_guild_role_update(before, after):
     await log_message(before.guild.id, '**ROLE_EDITED**', '**previous_role:**', before.name,
                       '**after_role:**', after.name)
-
-
-@client.event
-async def on_guild_emojis_update(guild, before, after):
-    pass
 
 
 @client.event
