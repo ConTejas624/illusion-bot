@@ -90,8 +90,9 @@ async def on_message_delete(message):
 
 @client.event
 async def on_message_edit(before, after):
-    await log_message(before.guild.id, '**MESSAGE_EDIT**', '**user:**', after.author.name,
-                      '**previous text: **', before.content, '**new text:**', after.content)
+    if not before.content == after.content:
+        await log_message(before.guild.id, '**MESSAGE_EDIT**', '**user:**', after.author.name,
+                          '**previous text: **', before.content, '**new text:**', after.content)
 
 
 @client.event
@@ -168,6 +169,13 @@ async def on_invite_delete(invite):
 
 
 @client.event
+async def on_error(event, *args, **kwargs):
+    print('ERROR: ' + event)
+    print(args)
+    print(kwargs)
+
+
+@client.event
 async def on_message(message):
     # prevent the bot from replying to its own messages
     if message.author.bot:
@@ -208,6 +216,7 @@ async def on_message(message):
         if '-close' in message.content:
             await message.channel.send('Closing connection')
             await client.close()
+
 
 # allows this to be used as a code library for another bot possibly
 if __name__ == '__main__':
