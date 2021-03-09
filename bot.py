@@ -1,5 +1,6 @@
 import among
 import discord
+import time
 
 # reference links
 # discord.py API reference: https://discordpy.readthedocs.io/en/latest/api.html#
@@ -119,6 +120,20 @@ async def handle_response(channel, msg):
         return
 
 
+# randomly assign users to another user
+async def rand_assign(users):
+    assigned_user = []
+    i = 1
+    for i in range(1, len(users)):
+        assigned_user.append(users[i])
+    assigned_user.append(users[0])
+
+    i = 0
+    for i in range(len(users)):
+        msg = 'You were assigned: ' + assigned_user[i].display_name
+        await users[i].send(content=msg)
+
+
 @client.event
 async def on_message(message):
     # prevent the bot from replying to its own messages
@@ -128,6 +143,11 @@ async def on_message(message):
     # used to check if bot is online/connection
     if message.content == '$ping':
         await message.channel.send('pong!')
+
+    # command for random assignment
+    if message.content.startswith('$rand'):
+        users = message.mentions
+        await rand_assign(users)
 
     # auto-responses
     await handle_response(message.channel, message.content)
@@ -146,7 +166,7 @@ async def on_message(message):
             write_responses()
 
         # adds user as a bot admin
-        if '-add_admin' in message.content:
+        if message.content.startswith('$add_admin'):
             admin_data = open('ignored/admin_data.dat', 'a')  # open file
             mentions = []  # list of members who were added to send message after
 
@@ -161,17 +181,18 @@ async def on_message(message):
             print('User(s) {} added as a bot administrator'.format(mentions))
 
         # sets this channel as the channel for logs
-        if '-set_log' in message.content:
+        if message.content.startswith('$set_log'):
             log_channels.update({str(message.guild.id): message.channel})
             await message.channel.send('Channel set as the log channel')
 
         # removes this channel as the channel for logs
-        if '-rm_log' in message.content:
+        if message.content.startswith('$rm_log'):
             log_channels.pop(str(message.guild.id))
             await message.channel.send('Channel removed as the log channel')
 
         # close the connection
         if '-close' in message.content:
+            time.sleep(2)
             await message.channel.send('Closing connection')
             await client.close()
 
