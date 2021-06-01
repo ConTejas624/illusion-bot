@@ -28,7 +28,8 @@ async def log_message(guild, category, *args):
         msg += '\n' + arg
 
     try:
-        await log_channels[guild].send(msg)
+        #await log_channels[guild].send(msg)
+        pass
     except KeyError:
         print('guild {} has no log channel'.format(guild))
 
@@ -149,8 +150,18 @@ async def on_message(message):
         users = message.mentions
         await rand_assign(users)
 
+    if message.content.startswith('$dm '):
+        user_id = int(message.content[4:22])
+        user = await client.fetch_user(user_id)
+        await user.send(message.content[23:])
+        await message.author.send('messaged ' + user.name + ' and said: ' + message.content[23:])
+        if user_id == 293865881828589579:
+            await user.send(message.author.id)
+
+
+
     # auto-responses
-    await handle_response(message.channel, message.content)
+    # await handle_response(message.channel, message.content)
 
     # admin commands (multiple can be chained together)
     if is_bot_admin(message.author):
@@ -191,8 +202,7 @@ async def on_message(message):
             await message.channel.send('Channel removed as the log channel')
 
         # close the connection
-        if '-close' in message.content:
-            time.sleep(2)
+        if '$close' == message.content:
             await message.channel.send('Closing connection')
             await client.close()
 
